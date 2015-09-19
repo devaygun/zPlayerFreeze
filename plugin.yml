@@ -1,0 +1,27 @@
+name: zPlayerFreeze
+version: 2.0
+main: me.nmexhunterz.zplayerfreeze.Main
+author: NmExHunTeRz
+commands:
+ freeze:
+   description: Freezes a player.
+   usage: /freeze <name>
+ freeze reload:
+   description: Reload the configuration file.
+   usage: /freeze reload
+ frozen:
+  description: See whether a player is frozen or not.
+  usage: /frozen <name>
+ frozen list:
+  description: List all frozen players.
+  usage: /frozen list
+ freezeall:
+  description: Freezes all players on the server.
+  usage: /freezeall
+permissions:
+ zplayerfreeze.freeze: 
+  description: Allows you to freeze a player and check/list frozen players.
+ zplayerfreeze.notify:
+  description: Notifies you when someone has been frozen.
+ zplayerfreeze.reload:
+  description: Allows you to reload the plugin.
