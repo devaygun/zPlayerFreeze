@@ -1,0 +1,11 @@
+# Configuration file for zPlayerFreeze
+prefix: '&3[&bzPlayerFreeze&3] '
+frozenMsg: '&9You have been frozen!'
+notifyFrozenMsg: '&ahas been frozen.'
+unfrozenMsg: '&9You have been unfrozen!'
+notifyUnfrozenMsg: '&ahas been unfrozen.'
+commandsMsg: '&cYou cannot use any commands whilst frozen.'
+placeMsg: '&cYou cannot place any blocks whilst frozen.'
+breakMsg: '&cYou cannot break any blocks whilst frozen.'
+dropItemMsg: '&cYou cannot drop items whilst frozen.'
+interactMsg: '&cYou cannot interact with blocks whilst frozen.'
