@@ -22,6 +22,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -32,6 +33,10 @@ public class Main extends JavaPlugin implements Listener {
 	String prefix = (ChatColor.translateAlternateColorCodes('&', getConfig().getString("prefix")));
 	
 	int freezeToggle = 0;
+	
+	int frozenTime = 0;
+	
+	HashMap<UUID, ItemStack> helmet = new HashMap<UUID, ItemStack>();
 		
 	@Override
 	public void onEnable(){
@@ -180,66 +185,101 @@ public class Main extends JavaPlugin implements Listener {
                     }
             }
     }
+    
+    @EventHandler
+    public void freezePlayer(UUID uuid) {
+    	this.frozenPlayers.add(uuid);
+    }
+    
+    @EventHandler
+    public void unFreezePlayer(UUID uuid) {
+    	this.frozenPlayers.remove(uuid);
+    }
 	
 	@EventHandler
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
 		if (commandLabel.equalsIgnoreCase("freeze") && (sender.hasPermission("zplayerfreeze.use") || (sender.isOp()))) {
+			
+			if (args.length == 0 || args[0].equalsIgnoreCase(null)) {
+				sender.sendMessage(prefix + ChatColor.BLUE + "Commands:");
+				sender.sendMessage(ChatColor.RED + "/freeze [name]" + ChatColor.WHITE + " - Freeze a player.");
+				sender.sendMessage(ChatColor.RED + "/freezetemp [name] [seconds]" + ChatColor.WHITE + " - Temporarily freeze a player (Coming soon).");
+				sender.sendMessage(ChatColor.RED + "/frozen [name]" + ChatColor.WHITE + " - Check if a player is frozen.");
+				sender.sendMessage(ChatColor.RED + "/frozen list" + ChatColor.WHITE + " - See all frozen players.");
+				sender.sendMessage(ChatColor.RED + "/freeze all" + ChatColor.WHITE + " - Freeze all online players.");
+				sender.sendMessage(ChatColor.RED + "/freeze reload" + ChatColor.WHITE + " - Reloads the config.");
+				return true;
+			}
+			
 			Player target = Bukkit.getServer().getPlayer(args[0]);
 			UUID uuid = target.getUniqueId();
 			Player player = Bukkit.getPlayer(uuid);
 			String playerName = player.getName();
 			
-			if (args.length == 0) {
-				sender.sendMessage(prefix + ChatColor.RED + "You must specify a username.");
-				return true;
-			}
-			
 			if (args.length == 1 && args[0].equalsIgnoreCase("reload") && (sender.hasPermission("zplayerfreeze.reload") || (sender.isOp()))) {
 				reloadConfig();
-				sender.sendMessage(ChatColor.GREEN + "zPlayerFreeze has been reloaded.");
+				sender.sendMessage(prefix + ChatColor.GREEN + "zPlayerFreeze has been reloaded.");
 				return true;
 			}
 			else if (!sender.hasPermission("zplayerfreeze.reload")){
-				sender.sendMessage(ChatColor.RED + "You need 'zplayerfreeze.reload' to perform this.");
+				sender.sendMessage(prefix + ChatColor.RED + "You need 'zplayerfreeze.reload' to perform this.");
 				return true;
 			}
-			
+
 			if (this.frozenPlayers.contains(uuid)) {
 				this.frozenPlayers.remove(uuid);
 				
 				for(Player staff : Bukkit.getOnlinePlayers()){
 		            if(staff.hasPermission("zplayerfreeze.notify")){
-		                staff.sendMessage(prefix + ChatColor.GREEN + playerName + " " + ChatColor.translateAlternateColorCodes('&', getConfig().getString("notifyUnfrozenMsg")));
+		                staff.sendMessage(prefix + ChatColor.GREEN + playerName + " " + ChatColor.translateAlternateColorCodes('&', getConfig().getString("notifyUnfrozenMsg")) + ".");
 		            }
 		        }
-				player.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', getConfig().getString("unfrozenMsg")));
-				player.getInventory().setHelmet(new ItemStack(Material.AIR, 1));
+				player.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', getConfig().getString("unfrozenMsg") + "."));
+				player.getInventory().setHelmet(helmet.get(player.getUniqueId()));
 				return true;
 			}
+			
 			
 			this.frozenPlayers.add(uuid);
 			
 			for(Player staff : Bukkit.getOnlinePlayers()){
-	            if(staff.hasPermission("zplayerfreeze.notify")){
-	                staff.sendMessage(prefix + ChatColor.GREEN + target.getName() + " " + ChatColor.translateAlternateColorCodes('&', getConfig().getString("notifyFrozenMsg")));
+	            if(staff.hasPermission("zplayerfreeze.notify") && frozenTime > 0){
+	                staff.sendMessage(prefix + ChatColor.GREEN + target.getName() + " " + ChatColor.translateAlternateColorCodes('&', getConfig().getString("notifyFrozenMsg")) + " for " + frozenTime + " seconds.");
 	            }
-	        }			
-			player.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', getConfig().getString("frozenMsg")));
+	            else if (staff.hasPermission("zplayerfreeze.notify") && frozenTime < 1){
+	                staff.sendMessage(prefix + ChatColor.GREEN + target.getName() + " " + ChatColor.translateAlternateColorCodes('&', getConfig().getString("notifyFrozenMsg")) + ".");
+	            }
+	        }		
+			
+            if(frozenTime > 1){
+                player.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', getConfig().getString("frozenMsg")) + " for " + frozenTime + " seconds.");
+            }
+            else if (frozenTime == 1) {
+                player.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', getConfig().getString("frozenMsg")) + " for " + frozenTime + " second.");
+            }
+            else if (frozenTime < 1){
+                player.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', getConfig().getString("frozenMsg")) + ".");
+            }
+            
+			helmet.put(player.getUniqueId(), player.getInventory().getHelmet());
 			player.getInventory().setHelmet(new ItemStack(Material.ICE, 1));
 			return true;
-			} 
+			 
+		}
+		
 		else if (!sender.hasPermission("zplayerfreeze.use")){
 			sender.sendMessage(ChatColor.RED + "You need 'zplayerfreeze.use' to perform this.");
 			return true; 
 		}
 		
+		
 		if (commandLabel.equalsIgnoreCase("freezeall") && (sender.hasPermission("zplayerfreeze.use") || (sender.isOp()))) {
 			if (freezeToggle == 0 ) {
-				sender.sendMessage(prefix + ChatColor.YELLOW + "All players been frozen.");
+				sender.sendMessage(prefix + ChatColor.YELLOW + "All players have been frozen.");
 				
 				for (Player player : Bukkit.getOnlinePlayers()) {
 					this.frozenPlayers.add(player.getUniqueId());
-					player.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', getConfig().getString("frozenMsg")));
+					player.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', getConfig().getString("frozenMsg")) + ".");
 				}
 				freezeToggle = 1;
 			}
@@ -248,7 +288,7 @@ public class Main extends JavaPlugin implements Listener {
 
 				for (Player player : Bukkit.getOnlinePlayers()) {
 					this.frozenPlayers.remove(player.getUniqueId());
-					player.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', getConfig().getString("unfrozenMsg")));
+					player.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', getConfig().getString("unfrozenMsg")) + ".");
 				}
 				freezeToggle = 0;
 			}
@@ -265,7 +305,7 @@ public class Main extends JavaPlugin implements Listener {
 
 			
 			if (args.length == 1 && args[0].equalsIgnoreCase("list") && (sender.hasPermission("zplayerfreeze.use") || (sender.isOp()))) {
-				sender.sendMessage(prefix + "Frozen players:");
+				sender.sendMessage(prefix + ChatColor.BLUE + "Frozen players:");
 				
 				for(UUID uuid : this.frozenPlayers){
 					Player player = Bukkit.getPlayer(uuid);
@@ -282,6 +322,8 @@ public class Main extends JavaPlugin implements Listener {
 				sender.sendMessage(prefix + ChatColor.RED + "Could not find player " + args[0] + ".");
 				return true;
 			}
+			
+			
 			
 			UUID uuid = target.getUniqueId();
 			Player player = Bukkit.getPlayer(uuid);
@@ -305,5 +347,8 @@ public class Main extends JavaPlugin implements Listener {
 			}
 		}
 		return false;
+		
+		
 	}
+	
 }
