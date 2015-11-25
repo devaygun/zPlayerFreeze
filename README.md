@@ -1,4 +1,4 @@
-# zPlayerFreeze 2.0
+# zPlayerFreeze 2.2
 A minecraft plugin that allows you to easily freeze players with some handy features. 
 
 Features:
