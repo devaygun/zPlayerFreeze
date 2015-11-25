@@ -1,5 +1,5 @@
 name: zPlayerFreeze
-version: 2.0
+version: 2.2
 main: me.nmexhunterz.zplayerfreeze.Main
 author: NmExHunTeRz
 commands:
@@ -17,7 +17,7 @@ commands:
   usage: /frozen list
  freezeall:
   description: Freezes all players on the server.
-  usage: /freezeall
+  usage: /freeze all
 permissions:
  zplayerfreeze.freeze: 
   description: Allows you to freeze a player and check/list frozen players.
